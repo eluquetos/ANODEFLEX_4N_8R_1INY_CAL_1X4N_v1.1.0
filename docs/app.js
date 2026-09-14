@@ -24,8 +24,7 @@ function buildBranches(){
 
 function validateInputs(values){return values.every(Number.isFinite)}
 
-function computeFixed(force=false){
-  if(state.fixed&&!force){$("confirm-dialog").showModal();return}
+function computeFixed(){
   const V=n("nom-v"),cables=cableInputs(),currents=Object.fromEntries(ids.map(id=>[id,n("nom-i"+id)]));
   const values=[V,...Object.values(cables),...Object.values(currents)];
   if(!validateInputs(values)||V<=0||Object.values(cables).some(value=>value<0)||Object.values(currents).some(value=>value<=0)){
@@ -35,7 +34,7 @@ function computeFixed(force=false){
   try{result=AnodeflexModel.dimension({V,...cables,currents})}
   catch(error){showMessage(error.message==="voltage-exhausted"?"Las caídas en los cables consumen la tensión disponible. Reduzca corrientes o resistencias de cable, o aumente el voltaje.":"No se pudo obtener un conjunto físico de resistencias.","error");return}
   state.fixed=result.fixed;state.nominal=result;
-  ids.forEach(id=>{$("fixed-r"+id).textContent=fmt(result.fixed[id],2)+" Ω";$("show-r-"+id).textContent=fmt(result.fixed[id],2)+" Ω";$("target-"+id).value=currents[id]});
+  ids.forEach(id=>{$("fixed-r"+id).textContent=fmt(result.fixed[id],2)+" Ω";$("show-r-"+id).textContent=fmt(result.fixed[id],2)+" Ω";$("target-"+id).value=currents[id];setRheostat(id,0)});
   $("fixed-nodes").textContent=nodeText(result.voltages);$("live-v").value=V;
   localStorage.setItem("anodeflex-4-fixed",JSON.stringify({fixed:state.fixed,stateNominal:state.nominal}));
   showMessage("Resistencias calculadas y fijadas para los cuatro nodos. Ya puede regular el voltaje y los reóstatos.","success");solve();
@@ -103,11 +102,11 @@ function loadCase(file){
 
 function showMessage(text,type){const element=$("message");element.textContent=text;element.className="message show "+type}
 function wireEvents(){
-  $("calculate-fixed").addEventListener("click",()=>computeFixed());$("confirm-dialog").addEventListener("close",event=>{if(event.target.returnValue==="confirm")computeFixed(true)});$("live-v").addEventListener("input",solve);
+  $("calculate-fixed").addEventListener("click",computeFixed);$("live-v").addEventListener("input",solve);
   ids.forEach(id=>{$("reo-"+id).addEventListener("input",solve);$("target-"+id).addEventListener("input",solve)});
   $("reset-rheostats").addEventListener("click",()=>{ids.forEach(id=>setRheostat(id,0));solve()});$("assist").addEventListener("click",assistedAdjustment);$("tolerance").addEventListener("input",solve);$("save-case").addEventListener("click",saveCase);$("load-case").addEventListener("click",()=>$("case-file").click());$("case-file").addEventListener("change",event=>{if(event.target.files[0])loadCase(event.target.files[0]);event.target.value=""});$("print-report").addEventListener("click",()=>window.print());
 }
-function restore(){try{const saved=JSON.parse(localStorage.getItem("anodeflex-4-fixed"));if(saved?.fixed&&saved?.stateNominal){state.fixed=saved.fixed;state.nominal=saved.stateNominal;ids.forEach(id=>{$("fixed-r"+id).textContent=fmt(state.fixed[id],2)+" Ω";$("show-r-"+id).textContent=fmt(state.fixed[id],2)+" Ω"});$("fixed-nodes").textContent=nodeText(state.nominal.voltages);solve();return}}catch{}computeFixed(true)}
+function restore(){try{const saved=JSON.parse(localStorage.getItem("anodeflex-4-fixed"));if(saved?.fixed&&saved?.stateNominal){state.fixed=saved.fixed;state.nominal=saved.stateNominal;ids.forEach(id=>{$("fixed-r"+id).textContent=fmt(state.fixed[id],2)+" Ω";$("show-r-"+id).textContent=fmt(state.fixed[id],2)+" Ω"});$("fixed-nodes").textContent=nodeText(state.nominal.voltages);solve();return}}catch{}computeFixed()}
 
 let installPrompt=null;
 window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();installPrompt=event;$("install-app").hidden=false});

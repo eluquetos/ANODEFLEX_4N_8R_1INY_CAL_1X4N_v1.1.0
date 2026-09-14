@@ -14,6 +14,11 @@ const operating=model.simulate({V:24,...cables,fixed:nominal.fixed,rheostats:zer
 for(const id of model.IDS)assert.ok(Math.abs(operating.currents[id]-currents[id])<1e-12,`corriente ${id}`);
 assert.ok(Math.abs(operating.It-6.6)<1e-12);
 assert.ok(Math.abs(operating.pError)<1e-10);
+const revisedCurrents={...currents,11:1.5};
+const revised=model.dimension({V:26,...cables,currents:revisedCurrents});
+assert.notEqual(revised.fixed[11],nominal.fixed[11],"un nuevo voltaje o corriente debe recalcular R11");
+const revisedOperating=model.simulate({V:26,...cables,fixed:revised.fixed,rheostats:zeroReostats});
+for(const id of model.IDS)assert.ok(Math.abs(revisedOperating.currents[id]-revisedCurrents[id])<1e-12,`corriente recalculada ${id}`);
 const targets={11:1,12:.8,21:.7,22:.7,31:.6,32:.5,41:.4,42:.3};
 const adjustment=model.adjust({V:24,...cables,fixed:nominal.fixed,targets,maxReo:100});
 assert.equal(adjustment.feasible,true);
