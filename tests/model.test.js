@@ -1,5 +1,5 @@
 const assert=require("node:assert/strict");
-const model=require("../dist/model.js");
+const model=require("../docs/model.js");
 const currents={11:1.2,12:1,21:.9,22:.9,31:.8,32:.7,41:.6,42:.5};
 const cables={Rc1:.4,Rc2:.3,Rc3:.2,Rc4:.1};
 const nominal=model.dimension({V:24,...cables,currents});
