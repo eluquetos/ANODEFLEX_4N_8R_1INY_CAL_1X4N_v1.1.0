@@ -6,6 +6,9 @@ const html=fs.readFileSync(path.join(root,"index.html"),"utf8");
 for(const file of ["styles.css","model.js","app.js","manifest.webmanifest","favicon.svg","icon-192.svg","icon-512.svg","sw.js"])assert.ok(fs.existsSync(path.join(root,file)),`${file} ausente`);
 for(const id of ["11","12","21","22","31","32","41","42"])assert.ok(html.includes(`id="nom-i${id}"`),`nom-i${id} ausente`);
 for(const id of ["rc1","rc2","rc3","rc4","assist","calculate-fixed"])assert.ok(html.includes(`id="${id}"`),`${id} ausente`);
+for(const id of ["nom-v","rc1","rc2","rc3","rc4","nom-i11","nom-i12","nom-i21","nom-i22","nom-i31","nom-i32","nom-i41","nom-i42","live-v"]){
+  assert.match(html,new RegExp(`id="${id}"[^>]*step="0\\.01"`),`${id} debe variar en centésimas`);
+}
 for(const id of ["res-i2","res-i3","res-i4","res-dv1","res-dv2","res-dv3","res-dv4"])assert.ok(html.includes(`id="${id}"`),`${id} ausente`);
 assert.ok(!html.includes("<svg"),"el esquema en vivo no debe mostrarse");
 assert.ok(!html.includes('type="range"'),"no debe haber reglas deslizantes");
