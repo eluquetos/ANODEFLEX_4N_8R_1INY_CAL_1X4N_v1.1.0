@@ -1,0 +1,26 @@
+const assert=require("node:assert/strict");
+const model=require("../dist/model.js");
+const currents={11:1.2,12:1,21:.9,22:.9,31:.8,32:.7,41:.6,42:.5};
+const cables={Rc1:.4,Rc2:.3,Rc3:.2,Rc4:.1};
+const nominal=model.dimension({V:24,...cables,currents});
+const expectedVoltages={1:21.36,2:20.04,3:19.52,4:19.41};
+const expectedTrunks={1:6.6,2:4.4,3:2.6,4:1.1};
+for(const node of model.NODES){
+  assert.ok(Math.abs(nominal.voltages[node]-expectedVoltages[node])<1e-12,`voltaje V${node}`);
+  assert.ok(Math.abs(nominal.trunks[node]-expectedTrunks[node])<1e-12,`corriente Rc${node}`);
+}
+const zeroReostats=Object.fromEntries(model.IDS.map(id=>[id,0]));
+const operating=model.simulate({V:24,...cables,fixed:nominal.fixed,rheostats:zeroReostats});
+for(const id of model.IDS)assert.ok(Math.abs(operating.currents[id]-currents[id])<1e-12,`corriente ${id}`);
+assert.ok(Math.abs(operating.It-6.6)<1e-12);
+assert.ok(Math.abs(operating.pError)<1e-10);
+const targets={11:1,12:.8,21:.7,22:.7,31:.6,32:.5,41:.4,42:.3};
+const adjustment=model.adjust({V:24,...cables,fixed:nominal.fixed,targets,maxReo:100});
+assert.equal(adjustment.feasible,true);
+const adjusted=model.simulate({V:24,...cables,fixed:nominal.fixed,rheostats:adjustment.rheostats});
+for(const id of model.IDS)assert.ok(Math.abs(adjusted.currents[id]-targets[id])<1e-12,`objetivo ${id}`);
+const increased={...zeroReostats,11:10};
+const throttled=model.simulate({V:24,...cables,fixed:nominal.fixed,rheostats:increased});
+assert.ok(throttled.currents["11"]<operating.currents["11"],"al aumentar Reo11 debe disminuir I11");
+assert.throws(()=>model.dimension({V:1,Rc1:1,Rc2:1,Rc3:1,Rc4:1,currents}),/voltage-exhausted/);
+console.log("Pruebas del modelo ANODEFLEX de cuatro nodos: correctas");
