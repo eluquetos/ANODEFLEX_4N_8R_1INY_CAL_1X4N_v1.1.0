@@ -37,7 +37,7 @@ function computeFixed(){
   state.fixed=result.fixed;state.nominal=result;
   ids.forEach(id=>{$("fixed-r"+id).textContent=fmt(result.fixed[id],2)+" Ω";$("system-r-"+id).value=result.fixed[id].toFixed(2);$("target-"+id).value=currents[id];setRheostat(id,0)});
   $("fixed-nodes").textContent=nodeText(result.voltages);$("live-v").value=V;
-  localStorage.setItem("anodeflex-4-fixed",JSON.stringify({fixed:state.fixed,stateNominal:state.nominal}));
+  localStorage.setItem("anodeflex-4-1iny-fixed",JSON.stringify({fixed:state.fixed,stateNominal:state.nominal}));
   showMessage("Resistencias calculadas y fijadas para los cuatro nodos. Ya puede regular el voltaje y los reóstatos.","success");solve();
 }
 
@@ -49,7 +49,7 @@ function solve(){
   const V=n("live-v"),rheostats=Object.fromEntries(ids.map(id=>[id,Math.max(0,n("reo-"+id)||0)]));
   try{state.op=AnodeflexModel.simulate({V,...cableArgs(state.nominal.cables),fixed:state.fixed,rheostats});render()}
   catch{showMessage("La simulación contiene un valor no válido.","error")}
-  localStorage.setItem("anodeflex-4-fixed",JSON.stringify({fixed:state.fixed,stateNominal:state.nominal}));
+  localStorage.setItem("anodeflex-4-1iny-fixed",JSON.stringify({fixed:state.fixed,stateNominal:state.nominal}));
 }
 
 function render(){
@@ -86,7 +86,7 @@ function assistedAdjustment(){
 }
 
 function caseData(){return {format:"anodeflex-4-nodes-case",version:1,createdAt:new Date().toISOString(),calibration:{V:state.nominal.V,cables:state.nominal.cables,currents:state.nominal.currents,fixed:state.fixed},operation:{V:n("live-v"),targets:Object.fromEntries(ids.map(id=>[id,n("target-"+id)])),rheostats:Object.fromEntries(ids.map(id=>[id,n("reo-"+id)])),rheostatMax:n("reo-max"),tolerancePercent:n("tolerance")},results:state.op}}
-function saveCase(){if(!state.op)return;const blob=new Blob([JSON.stringify(caseData(),null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="anodeflex-4-nodos-"+new Date().toISOString().slice(0,10)+".json";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function saveCase(){if(!state.op)return;const blob=new Blob([JSON.stringify(caseData(),null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="anodeflex-4-nodos-1iny-"+new Date().toISOString().slice(0,10)+".json";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 
 function loadCase(file){
   const reader=new FileReader();
@@ -99,7 +99,7 @@ function loadCase(file){
     nodes.forEach(node=>{$("rc"+node).value=calibration.cables[node]});
     ids.forEach(id=>{$("nom-i"+id).value=calibration.currents[id];$("fixed-r"+id).textContent=fmt(state.fixed[id],2)+" Ω";$("system-r-"+id).value=Number(state.fixed[id]).toFixed(2);$("target-"+id).value=data.operation.targets[id];setRheostat(id,data.operation.rheostats[id])});
     $("fixed-nodes").textContent=nodeText(calibration.voltages);$("live-v").value=data.operation.V;$("reo-max").value=data.operation.rheostatMax||100;$("tolerance").value=data.operation.tolerancePercent||2;
-    localStorage.setItem("anodeflex-4-fixed",JSON.stringify({fixed:state.fixed,stateNominal:state.nominal}));
+    localStorage.setItem("anodeflex-4-1iny-fixed",JSON.stringify({fixed:state.fixed,stateNominal:state.nominal}));
     solve();showMessage("Caso de cuatro nodos importado y recalculado correctamente.","success");
   }catch{showMessage("El archivo no corresponde a un caso ANODEFLEX de cuatro nodos válido.","error")}};
   reader.readAsText(file);
@@ -111,7 +111,7 @@ function wireEvents(){
   ids.forEach(id=>{$("reo-"+id).addEventListener("input",solve);$("target-"+id).addEventListener("input",solve);$("system-r-"+id).addEventListener("input",solve)});
   $("reset-rheostats").addEventListener("click",()=>{ids.forEach(id=>setRheostat(id,0));solve()});$("assist").addEventListener("click",assistedAdjustment);$("tolerance").addEventListener("input",solve);$("save-case").addEventListener("click",saveCase);$("load-case").addEventListener("click",()=>$("case-file").click());$("case-file").addEventListener("change",event=>{if(event.target.files[0])loadCase(event.target.files[0]);event.target.value=""});$("print-report").addEventListener("click",()=>window.print());
 }
-function restore(){try{const saved=JSON.parse(localStorage.getItem("anodeflex-4-fixed"));if(saved?.fixed&&saved?.stateNominal){state.fixed=saved.fixed;state.nominal=saved.stateNominal;ids.forEach(id=>{$("fixed-r"+id).textContent=fmt(state.fixed[id],2)+" Ω";$("system-r-"+id).value=Number(state.fixed[id]).toFixed(2)});$("fixed-nodes").textContent=nodeText(state.nominal.voltages);solve();return}}catch{}computeFixed()}
+function restore(){try{const saved=JSON.parse(localStorage.getItem("anodeflex-4-1iny-fixed")||localStorage.getItem("anodeflex-4-fixed"));if(saved?.fixed&&saved?.stateNominal){state.fixed=saved.fixed;state.nominal=saved.stateNominal;ids.forEach(id=>{$("fixed-r"+id).textContent=fmt(state.fixed[id],2)+" Ω";$("system-r-"+id).value=Number(state.fixed[id]).toFixed(2)});$("fixed-nodes").textContent=nodeText(state.nominal.voltages);localStorage.setItem("anodeflex-4-1iny-fixed",JSON.stringify({fixed:state.fixed,stateNominal:state.nominal}));solve();return}}catch{}computeFixed()}
 
 let installPrompt=null;
 window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();installPrompt=event;$("install-app").hidden=false});

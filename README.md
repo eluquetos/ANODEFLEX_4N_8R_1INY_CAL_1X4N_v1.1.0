@@ -1,4 +1,4 @@
-# ANODEFLEX 4 nodos
+# ANODEFLEX 4 nodos · 1 inyección
 
 Aplicación web instalable para dimensionar y regular ocho ramas ANODEFLEX distribuidas en cuatro nodos de una red de protección catódica por corriente impresa.
 

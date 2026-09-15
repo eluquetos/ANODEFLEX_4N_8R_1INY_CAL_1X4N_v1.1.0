@@ -1,6 +1,6 @@
 {
-  "name": "ANODEFLEX 4 Nodos",
-  "short_name": "ANODEFLEX 4",
+  "name": "ANODEFLEX 4 Nodos · 1 Inyección",
+  "short_name": "ANODEFLEX 4 1INY",
   "description": "Cálculo y regulación de ocho ramas ANODEFLEX en cuatro nodos.",
   "start_url": "./",
   "display": "standalone",

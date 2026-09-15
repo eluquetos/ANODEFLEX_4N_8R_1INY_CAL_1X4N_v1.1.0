@@ -29,8 +29,11 @@ assert.ok(app.includes('addEventListener("click",computeFixed)'),"el botón debe
 assert.ok(app.includes("setRheostat(id,0)"),"el recálculo debe reiniciar los reóstatos");
 assert.ok(!app.includes("showModal"),"el recálculo no debe depender de una confirmación adicional");
 assert.ok(!html.includes('id="confirm-dialog"'),"el diálogo anterior debe eliminarse");
+assert.ok(html.includes('class="measurement-card side-single"'),"las mediciones deben usar la tarjeta técnica");
+assert.ok(html.includes('class="field-grid cable-fields"'),"voltaje y cables deben estar agrupados");
+assert.ok(html.includes('class="field-grid current-fields"'),"las corrientes deben estar agrupadas");
 const manifest=JSON.parse(fs.readFileSync(path.join(root,"manifest.webmanifest"),"utf8"));
 assert.equal(manifest.display,"standalone");
 assert.equal(manifest.start_url,"./");
-assert.equal(manifest.short_name,"ANODEFLEX 4");
+assert.equal(manifest.short_name,"ANODEFLEX 4 1INY");
 console.log("Pruebas de la aplicación estática de cuatro nodos: correctas");
