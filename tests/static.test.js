@@ -15,6 +15,8 @@ assert.ok(!html.includes('type="range"'),"no debe haber reglas deslizantes");
 const app=fs.readFileSync(path.join(root,"app.js"),"utf8");
 assert.ok(app.includes('const ids=["11","12","21","22","31","32","41","42"]'));
 assert.ok(app.includes('id="reo-${id}"'));
+assert.ok(app.includes('id="system-r-${id}"'),"cada resistencia del sistema debe ser editable");
+assert.ok(app.includes('$("system-r-"+id).addEventListener("input",solve)'),"editar una resistencia debe recalcular la simulación");
 assert.ok(app.includes("Resistencia del Sistema R${id}"));
 assert.ok(app.includes('id="reo-power-${id}"'));
 assert.ok(app.includes("o.currents[id]**2*o.rheostats[id]"));

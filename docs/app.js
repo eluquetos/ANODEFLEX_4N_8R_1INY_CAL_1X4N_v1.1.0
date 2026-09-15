@@ -7,6 +7,7 @@ const fmt=(value,digits=3)=>Number.isFinite(value)?value.toLocaleString("es-EC",
 const powerFmt=value=>Number.isFinite(value)?value.toFixed(2):"—";
 const cableInputs=()=>Object.fromEntries(nodes.map(node=>["Rc"+node,n("rc"+node)]));
 const cableArgs=cables=>Object.fromEntries(nodes.map(node=>["Rc"+node,cables[node]]));
+const fixedInputs=()=>Object.fromEntries(ids.map(id=>[id,n("system-r-"+id)]));
 const nodeText=voltages=>nodes.map(node=>`V${node} ${fmt(voltages[node],2)} V`).join(" · ");
 
 function buildBranches(){
@@ -18,7 +19,7 @@ function buildBranches(){
         <label><span class="input-title">Corriente</span><input id="target-${id}" type="number" min="0.001" step="0.01" value="${defaults[id]}"><em>A</em></label>
         <label><span class="input-title"><span>Reo${id}</span><strong id="reo-power-${id}">0.00 W</strong></span><input id="reo-${id}" type="number" min="0" max="10000" step="0.01" value="0"><em>Ω</em></label>
       </div>
-      <div class="fixed-note"><span>Resistencia del Sistema R${id}</span><strong id="show-r-${id}">— Ω</strong></div>
+      <div class="fixed-note"><span>Resistencia del Sistema R${id}</span><label class="fixed-control"><input id="system-r-${id}" aria-label="Resistencia del Sistema R${id}" type="number" min="0.01" step="0.01"><em>Ω</em></label></div>
     </article>`).join("");
 }
 
@@ -34,7 +35,7 @@ function computeFixed(){
   try{result=AnodeflexModel.dimension({V,...cables,currents})}
   catch(error){showMessage(error.message==="voltage-exhausted"?"Las caídas en los cables consumen la tensión disponible. Reduzca corrientes o resistencias de cable, o aumente el voltaje.":"No se pudo obtener un conjunto físico de resistencias.","error");return}
   state.fixed=result.fixed;state.nominal=result;
-  ids.forEach(id=>{$("fixed-r"+id).textContent=fmt(result.fixed[id],2)+" Ω";$("show-r-"+id).textContent=fmt(result.fixed[id],2)+" Ω";$("target-"+id).value=currents[id];setRheostat(id,0)});
+  ids.forEach(id=>{$("fixed-r"+id).textContent=fmt(result.fixed[id],2)+" Ω";$("system-r-"+id).value=result.fixed[id].toFixed(2);$("target-"+id).value=currents[id];setRheostat(id,0)});
   $("fixed-nodes").textContent=nodeText(result.voltages);$("live-v").value=V;
   localStorage.setItem("anodeflex-4-fixed",JSON.stringify({fixed:state.fixed,stateNominal:state.nominal}));
   showMessage("Resistencias calculadas y fijadas para los cuatro nodos. Ya puede regular el voltaje y los reóstatos.","success");solve();
@@ -42,9 +43,13 @@ function computeFixed(){
 
 function solve(){
   if(!state.fixed)return;
+  const fixed=fixedInputs();
+  if(ids.some(id=>!Number.isFinite(fixed[id])||fixed[id]<=0)){showMessage("Las resistencias del sistema deben ser mayores que cero.","error");return}
+  state.fixed=fixed;
   const V=n("live-v"),rheostats=Object.fromEntries(ids.map(id=>[id,Math.max(0,n("reo-"+id)||0)]));
   try{state.op=AnodeflexModel.simulate({V,...cableArgs(state.nominal.cables),fixed:state.fixed,rheostats});render()}
   catch{showMessage("La simulación contiene un valor no válido.","error")}
+  localStorage.setItem("anodeflex-4-fixed",JSON.stringify({fixed:state.fixed,stateNominal:state.nominal}));
 }
 
 function render(){
@@ -92,7 +97,7 @@ function loadCase(file){
     state.fixed=data.calibration.fixed;state.nominal=calibration;
     $("nom-v").value=calibration.V;
     nodes.forEach(node=>{$("rc"+node).value=calibration.cables[node]});
-    ids.forEach(id=>{$("nom-i"+id).value=calibration.currents[id];$("fixed-r"+id).textContent=fmt(state.fixed[id],2)+" Ω";$("show-r-"+id).textContent=fmt(state.fixed[id],2)+" Ω";$("target-"+id).value=data.operation.targets[id];setRheostat(id,data.operation.rheostats[id])});
+    ids.forEach(id=>{$("nom-i"+id).value=calibration.currents[id];$("fixed-r"+id).textContent=fmt(state.fixed[id],2)+" Ω";$("system-r-"+id).value=Number(state.fixed[id]).toFixed(2);$("target-"+id).value=data.operation.targets[id];setRheostat(id,data.operation.rheostats[id])});
     $("fixed-nodes").textContent=nodeText(calibration.voltages);$("live-v").value=data.operation.V;$("reo-max").value=data.operation.rheostatMax||100;$("tolerance").value=data.operation.tolerancePercent||2;
     localStorage.setItem("anodeflex-4-fixed",JSON.stringify({fixed:state.fixed,stateNominal:state.nominal}));
     solve();showMessage("Caso de cuatro nodos importado y recalculado correctamente.","success");
@@ -103,10 +108,10 @@ function loadCase(file){
 function showMessage(text,type){const element=$("message");element.textContent=text;element.className="message show "+type}
 function wireEvents(){
   $("calculate-fixed").addEventListener("click",computeFixed);$("live-v").addEventListener("input",solve);
-  ids.forEach(id=>{$("reo-"+id).addEventListener("input",solve);$("target-"+id).addEventListener("input",solve)});
+  ids.forEach(id=>{$("reo-"+id).addEventListener("input",solve);$("target-"+id).addEventListener("input",solve);$("system-r-"+id).addEventListener("input",solve)});
   $("reset-rheostats").addEventListener("click",()=>{ids.forEach(id=>setRheostat(id,0));solve()});$("assist").addEventListener("click",assistedAdjustment);$("tolerance").addEventListener("input",solve);$("save-case").addEventListener("click",saveCase);$("load-case").addEventListener("click",()=>$("case-file").click());$("case-file").addEventListener("change",event=>{if(event.target.files[0])loadCase(event.target.files[0]);event.target.value=""});$("print-report").addEventListener("click",()=>window.print());
 }
-function restore(){try{const saved=JSON.parse(localStorage.getItem("anodeflex-4-fixed"));if(saved?.fixed&&saved?.stateNominal){state.fixed=saved.fixed;state.nominal=saved.stateNominal;ids.forEach(id=>{$("fixed-r"+id).textContent=fmt(state.fixed[id],2)+" Ω";$("show-r-"+id).textContent=fmt(state.fixed[id],2)+" Ω"});$("fixed-nodes").textContent=nodeText(state.nominal.voltages);solve();return}}catch{}computeFixed()}
+function restore(){try{const saved=JSON.parse(localStorage.getItem("anodeflex-4-fixed"));if(saved?.fixed&&saved?.stateNominal){state.fixed=saved.fixed;state.nominal=saved.stateNominal;ids.forEach(id=>{$("fixed-r"+id).textContent=fmt(state.fixed[id],2)+" Ω";$("system-r-"+id).value=Number(state.fixed[id]).toFixed(2)});$("fixed-nodes").textContent=nodeText(state.nominal.voltages);solve();return}}catch{}computeFixed()}
 
 let installPrompt=null;
 window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();installPrompt=event;$("install-app").hidden=false});

@@ -27,5 +27,8 @@ for(const id of model.IDS)assert.ok(Math.abs(adjusted.currents[id]-targets[id])<
 const increased={...zeroReostats,11:10};
 const throttled=model.simulate({V:24,...cables,fixed:nominal.fixed,rheostats:increased});
 assert.ok(throttled.currents["11"]<operating.currents["11"],"al aumentar Reo11 debe disminuir I11");
+const editedFixed={...nominal.fixed,11:nominal.fixed[11]+5};
+const editedOperating=model.simulate({V:24,...cables,fixed:editedFixed,rheostats:zeroReostats});
+assert.ok(editedOperating.currents["11"]<operating.currents["11"],"al editar R11 debe recalcularse I11");
 assert.throws(()=>model.dimension({V:1,Rc1:1,Rc2:1,Rc3:1,Rc4:1,currents}),/voltage-exhausted/);
 console.log("Pruebas del modelo ANODEFLEX de cuatro nodos: correctas");
