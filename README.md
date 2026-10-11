@@ -15,8 +15,8 @@ La fuente alimenta el nodo 1 mediante Rc1. Rc2 conecta los nodos 1 y 2, Rc3 cone
 
 1. Ingrese el voltaje, Rc1 a Rc4 y las ocho corrientes medidas con los reóstatos en 0 Ω.
 2. Pulse **Calcular resistencias**. La aplicación calcula y conserva R11, R12, R21, R22, R31, R32, R41 y R42.
-3. Modifique el voltaje, los reóstatos o las corrientes objetivo. Los resultados se actualizan de inmediato.
-4. Pulse **Calcular ajuste de reóstatos** para obtener los valores que producen las corrientes objetivo.
+3. Ingrese las corrientes objetivo.
+4. Pulse **Calcular ajuste de reóstatos**. La aplicación calcula la tensión mínima y los reóstatos, dejando al menos uno en 0 Ω.
 5. Revise corrientes de tramo, caídas, potencias y balances en **Detalles eléctricos**.
 
 ## Instalación
